@@ -2,6 +2,8 @@ document.addEventListener("DOMContentLoaded", function() {
     const apiKey = "IXKMuxMnQlsDlDXllwDs3ar9XJmwz9dy"; // Replace with your actual API key
     const form = document.getElementById("cityForm");
     const weatherDiv = document.getElementById("weather");
+    const weatherhourly = document.getElementById("weatherhourly");
+    const weatherdays = document.getElementById("days");
 
     form.addEventListener("submit", function(event) {
         event.preventDefault();
@@ -19,6 +21,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     const locationKey = data[0].Key;
                     fetchHourlyWeather(locationKey);
                     fetchHourlysWeather(locationKey);
+                    fetchdays(locationKey);
                 } else {
                     weatherDiv.innerHTML = `<p>City not found.</p>`;
                 }
@@ -55,12 +58,29 @@ document.addEventListener("DOMContentLoaded", function() {
                 if (data && data.length > 0) {
                     displayWeather(data);
                 } else {
-                    weatherDiv.innerHTML += `<p>No 1-hour weather data available.</p>`;
+                    weatherhourly.innerHTML += `<p>No 1-hour weather data available.</p>`;
                 }
             })
             .catch(error => {
                 console.error("Error fetching weather data:", error);
-                weatherDiv.innerHTML += `<p>Error fetching 1-hour weather data.</p>`;
+                weatherhourly.innerHTML += `<p>Error fetching 1-hour weather data.</p>`;
+            });
+    }
+
+    function fetchdays(locationKey) {
+        const url = `http://dataservice.accuweather.com/forecasts/v1/daily/5day/${locationKey}?apikey=${apiKey}`;
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.DailyForecasts && data.DailyForecasts.length > 0) {
+                    displayWeatherday(data.DailyForecasts);
+                } else {
+                    weatherdays.innerHTML += `<p>No 5-day weather data available.</p>`;
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching weather data:", error);
+                weatherdays.innerHTML += `<p>Error fetching 5-day weather data.</p>`;
             });
     }
 
@@ -83,7 +103,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 </div>
             `;
         });
-        weatherDiv.innerHTML += weatherContent;
+        weatherhourly.innerHTML += weatherContent;
     }
 
     function displayWeathers(data) {
@@ -106,5 +126,25 @@ document.addEventListener("DOMContentLoaded", function() {
             `;
         });
         weatherDiv.innerHTML += weatherContent;
+    }
+
+    function displayWeatherday(data) {
+        let weatherContent = "<h2>5-Day Forecast</h2>";
+        data.forEach(dailyData => {
+            const temperature = dailyData.Temperature.Maximum.Value;
+            const weather = dailyData.Day.IconPhrase;
+            const weatherIcon = dailyData.Day.Icon;
+            const iconUrl = `https://developer.accuweather.com/sites/default/files/${String(weatherIcon).padStart(2, '0')}-s.png`;
+            const date = dailyData.Date;
+            weatherContent += `
+                <div class="daily-weather">
+                    <img src="${iconUrl}" alt="Weather Icon" class="iconn">
+                    <p>Temperature: ${temperature}°C</p>
+                    <p>Weather: ${weather}</p>
+                    <p>Date: ${date}</p>
+                </div>
+            `;
+        });
+        weatherdays.innerHTML += weatherContent;
     }
 });
